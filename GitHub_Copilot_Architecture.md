@@ -1,6 +1,6 @@
 # GitHub Copilot — Enterprise Architecture Reference
 
-**Version:** 1.1  
+**Version:** 1.2  
 **Date:** March 17, 2026  
 **Audience:** Enterprise Architects, Engineering Leadership, Security & Compliance Teams  
 **Classification:** Internal / Shareable
@@ -79,9 +79,9 @@ graph TB
         end
         
         subgraph ModelTier["MODEL TIER — Large Language Models"]
-            OpenAI["OpenAI Models<br/>(GPT-4o, GPT-5 mini, o3-mini)"]
-            Anthropic["Anthropic Models<br/>(Claude Haiku 4.5, Claude Opus 4.6)"]
-            Google["Google Models<br/>(Gemini 2.0 Flash, Gemini 2.5 Pro)"]
+            OpenAI["OpenAI Models<br/>(GPT-4.1, GPT-5 mini, GPT-5.1)"]
+            Anthropic["Anthropic Models<br/>(Claude Haiku 4.5, Claude Sonnet 4.5, Claude Opus 4.6)"]
+            Google["Google Models<br/>(Gemini 2.5 Pro, Gemini 3 Flash, Gemini 3 Pro)"]
             FastModels["Optimized Completion Models<br/>(Low-Latency Inline Suggestions)"]
         end
         
@@ -98,7 +98,6 @@ graph TB
         MCPServers["MCP Servers<br/>(Model Context Protocol — Custom Tools)"]
         WebFetch["Web Search & Documentation Retrieval"]
         ExtTools["IDE Extension Ecosystem<br/>(Linters, Formatters, Test Runners)"]
-        Bing["Microsoft Bing Search API"]
     end
 
     Editor -->|"Keystrokes, Selections,<br/>Cursor Events"| CopilotExt
@@ -136,7 +135,7 @@ graph TB
 | **Context-first design** | Suggestion quality is driven by context relevance; the context engine and ranking system are as critical as the models themselves |
 | **Zero-retention data handling** | On Business/Enterprise plans, prompts and suggestions are not stored after processing and are not used for model training [¹](#ref-1) |
 | **Defense in depth** | Content filtering occurs at both input (prompt) and output (response) stages; code referencing provides IP compliance |
-| **Progressive capability** | Four interaction modalities (completions → chat → agent → coding agent) allow incremental adoption with increasing autonomy |
+| **Progressive capability** | Five interaction modalities (completions → chat → edits → agent → coding agent) allow incremental adoption with increasing autonomy |
 | **Extensible by design** | Model Context Protocol (MCP), custom instructions, and the VS Code extension API enable organization-specific customization |
 
 ---
@@ -199,9 +198,10 @@ GitHub Copilot employs a **multi-model strategy** where different models are sel
 
 | Model Provider | Models Available | Primary Use Cases | Characteristics |
 |---|---|---|---|
-| **OpenAI** | GPT-4o, GPT-5 mini, o3-mini | Default for completions, chat, agent mode | Broad code generation capability; GPT-5 mini is the default unlimited model on Pro tier |
-| **Anthropic** | Claude Haiku 4.5, Claude Opus 4.6 | Default free-tier model (Haiku); premium reasoning (Opus) | Strong reasoning, detailed explanations, large context window. Opus 4.6 available on Pro+ |
-| **Google** | Gemini 2.0 Flash, Gemini 2.5 Pro | User-selectable for chat and agent mode | Fast inference (Flash), strong multimodal capability (Pro) |
+| **OpenAI** | GPT-4.1, GPT-5 mini, GPT-5.1, GPT-5.2 series | Default for completions, chat, agent mode | Broad code generation capability; GPT-5 mini is the default unlimited model on Pro tier. GPT-5.1-Codex and GPT-5.2-Codex optimized for coding agent tasks. |
+| **Anthropic** | Claude Haiku 4.5, Claude Sonnet 4/4.5/4.6, Claude Opus 4.5/4.6 | Default free-tier model (Haiku); premium reasoning (Opus) | Strong reasoning, detailed explanations, large context window. Opus 4.6 available on Pro+. Sonnet models balance speed and quality. |
+| **Google** | Gemini 2.5 Pro, Gemini 3 Flash, Gemini 3 Pro, Gemini 3.1 Pro | User-selectable for chat and agent mode | Fast inference (Flash), strong multimodal capability (Pro) |
+| **xAI** | Grok Code Fast 1 | User-selectable for chat | Fast code generation |
 | **Optimized completion models** | Specialized smaller models | Inline ghost text completions | Tuned for low latency (200–500ms); optimized for code completion specifically |
 
 #### 3.3.1 Model Selection Logic
@@ -212,10 +212,10 @@ Request Type → Model Selection:
 Inline Completion    →  Fast completion model (latency-optimized, <500ms target)
 Next Edit Suggestion →  Predictive model (suggests next likely edit location)
 Chat (default)       →  GPT-5 mini (unlimited on Pro) or user-selected model
-Chat (user override) →  Claude / Gemini / GPT-4o (user selects in UI)
-Agent Mode (IDE)     →  Most capable available model (Claude Opus 4.6, GPT-4o)
+Chat (user override) →  Claude / Gemini / GPT-4.1 (user selects in UI)
+Agent Mode (IDE)     →  Most capable available model (Claude Opus 4.6, GPT-4.1)
 Coding Agent (GitHub)→  Assigned via GitHub Issues; runs autonomously on GitHub infra
-Code Review          →  GPT-4o or organizational default
+Code Review          →  Organizational default or user-selected model
 PR Summarization     →  GitHub.com native feature (model selected by GitHub)
 ```
 
@@ -311,7 +311,7 @@ sequenceDiagram
 
 ## 5. Interaction Modalities
 
-GitHub Copilot provides four distinct interaction modalities, each with different architectural characteristics and increasing levels of autonomy:
+GitHub Copilot provides five distinct interaction modalities, each with different architectural characteristics and increasing levels of autonomy:
 
 ### 5.1 Inline Code Completions
 
@@ -339,7 +339,7 @@ GitHub Copilot provides four distinct interaction modalities, each with differen
 | Attribute | Detail |
 |---|---|
 | **Trigger** | Developer submits a message in the chat panel |
-| **Model** | Full-capability model (GPT-4o, Claude, Gemini — user-selectable) |
+| **Model** | Full-capability model (GPT-4.1, GPT-5 mini, Claude, Gemini — user-selectable) |
 | **Target latency** | First token in 1–3s; full response streamed over 2–15s |
 | **Context scope** | Selected code, open files, conversation history, `@workspace` indexed files, custom instructions |
 | **Output** | Natural language explanations, code blocks, terminal commands, file references |
@@ -352,7 +352,7 @@ GitHub Copilot provides four distinct interaction modalities, each with differen
 | Attribute | Detail |
 |---|---|
 | **Trigger** | Developer describes a high-level task in the IDE chat panel (agent mode) |
-| **Model** | Most capable available model (Claude Opus 4.6, GPT-4o) |
+| **Model** | Most capable available model (Claude Opus 4.6, GPT-4.1) |
 | **Duration** | 30 seconds to several minutes per task |
 | **Context scope** | Full workspace (searched on-demand), terminal, GitHub APIs, web, MCP tools |
 | **Output** | Multi-file edits, new file creation, terminal command execution, iterative refinement |
@@ -361,7 +361,18 @@ GitHub Copilot provides four distinct interaction modalities, each with differen
 | **IDE availability** | VS Code, Visual Studio, and JetBrains IDEs (not yet available in Xcode or Eclipse) |
 | **Architectural note** | Agent mode is architecturally distinct from completions and chat. It implements a **ReAct-style reasoning loop** [⁶](#ref-6) where the model alternates between reasoning steps and tool actions. The tool orchestrator manages the dispatch of tool calls to appropriate executors (client-side for file I/O and terminal; server-side for GitHub API and web search). Session state is maintained across the loop iterations. |
 
-### 5.4 Copilot Coding Agent (GitHub-Native Autonomous Agent)
+### 5.4 Copilot Edits (Edit Mode)
+
+| Attribute | Detail |
+|---|---|
+| **Trigger** | Developer describes a change in the Copilot Chat panel using edit mode |
+| **Model** | User-selectable model |
+| **IDE availability** | VS Code, Visual Studio, JetBrains IDEs |
+| **Output** | Multi-file edits shown as diffs for review |
+| **User control** | Developer explicitly selects which files Copilot can modify and reviews proposed changes after each turn |
+| **Architectural note** | Edit mode is the manual counterpart to agent mode. Both are sub-modes of **Copilot Edits**. In edit mode, Copilot does not autonomously invoke tools or run terminal commands — the developer retains full control over scope and iteration. Best suited for quick, specific updates to a defined set of files where minimal LLM requests are preferred. |
+
+### 5.5 Copilot Coding Agent (GitHub-Native Autonomous Agent)
 
 Distinct from IDE Agent Mode, the **Copilot Coding Agent** operates entirely on GitHub's infrastructure:
 
@@ -586,13 +597,13 @@ MCP is an **open protocol** (developed by Anthropic [¹⁰](#ref-10)) that allow
 Copilot Agent Mode
     ↓ (tool call via MCP protocol)
 MCP Client (built into Copilot)
-    ↓ (JSON-RPC over stdio or HTTP/SSE)
+    ↓ (JSON-RPC over stdio or Streamable HTTP)
 MCP Server (organization-hosted)
     ↓ (server's internal logic)
 External System (database, API, CI/CD, etc.)
 ```
 
-MCP servers can be run **locally** (stdio transport, per-developer) or **remotely** (HTTP/SSE transport, shared across teams). Organizations configure allowed MCP servers via VS Code settings or organizational policy.
+MCP servers can be run **locally** (stdio transport, per-developer) or **remotely** (Streamable HTTP transport, shared across teams). Organizations configure allowed MCP servers via VS Code settings or organizational policy.
 
 ### 10.2 Custom Instructions
 
@@ -602,7 +613,9 @@ GitHub Copilot supports a hierarchy of instruction files that shape its behavior
 |---|---|---|---|
 | **Repository instructions** | `.github/copilot-instructions.md` | Per-repository | Coding conventions, framework patterns, architectural decisions |
 | **Contextual instructions** | Any `.instructions.md` file with YAML frontmatter | Per-directory or per-file-pattern | Language-specific rules, module-specific patterns |
+| **Prompt files** | Any `.prompt.md` file | Per-repository or per-directory | Reusable prompt templates that can be invoked from chat |
 | **User instructions** | VS Code settings | Per-user | Personal preferences, common patterns |
+| **Organization instructions** | Organization-level Copilot settings (public preview) | Per-organization | Organization-wide coding standards enforced across all repos |
 | **Agent definitions** | `.github/agents/*.md` | Per-repository | Custom agent personas with specific tool access and behavioral rules |
 
 This instruction hierarchy enables organizations to codify their coding standards, security requirements, and architectural patterns directly into the AI assistant — ensuring Copilot generates code that **conforms to organizational conventions** without developer intervention.
@@ -679,11 +692,14 @@ The Copilot extension respects IDE proxy settings:
 | **JetBrains IDEs** | Plugin (IntelliJ, PyCharm, etc.) | ✅ | ✅ | ✅ | ✅ | Covers all JetBrains products |
 | **Xcode** | macOS application | ✅ | ✅ | ❌ | ❌ | Completions, chat, and NES; no agent mode or edits |
 | **Eclipse** | Eclipse plugin | ✅ | ✅ | ❌ | ❌ | Completions, chat, and NES; no agent mode or edits |
-| **Vim / Neovim** | Plugin | ✅ | ✅ | ❌ | ❌ | Completions and chat |
+| **Vim / Neovim** | Plugin | ✅ | ❌ | ❌ | ❌ | Inline completions only |
 | **Azure Data Studio** | Extension | ✅ | ❌ | ❌ | ❌ | Inline suggestions only |
+| **SQL Server Management Studio** | Extension | ✅ | ✅ | ❌ | ❌ | Via Microsoft Learn integration |
+| **Raycast** | Extension | N/A | ✅ | N/A | N/A | Chat via Raycast launcher (macOS) |
 | **Zed** | Built-in integration | ✅ | ✅ | ❌ | ❌ | Newer editor with native Copilot support |
 | **GitHub.com** | Native web experience | N/A | ✅ | N/A | N/A | Copilot in PRs, issues; Copilot Coding Agent |
 | **GitHub CLI** | CLI extension | N/A | ✅ | N/A | N/A | `gh copilot` for terminal-based chat & file changes |
+| **GitHub Desktop** | Native desktop app | N/A | N/A | N/A | N/A | AI-generated commit messages and descriptions |
 | **GitHub Mobile** | Native mobile app | N/A | ✅ | N/A | N/A | Chat on iOS and Android |
 | **Windows Terminal** | Terminal integration | N/A | ✅ | N/A | N/A | Chat within the terminal |
 
@@ -706,11 +722,13 @@ GitHub Copilot is a **SaaS-only service**. There is no self-hosted option. Key d
 |---|---|---|---|
 | **Code completions** | 2,000/month | Unlimited | Unlimited |
 | **Chat & agent mode requests** | 50/month | Unlimited (GPT-5 mini); 300 premium requests | Unlimited (GPT-5 mini); 1,500 premium requests |
-| **Models included** | Haiku 4.5, GPT-5 mini | Models from Anthropic, Google, OpenAI | All models including Claude Opus 4.6 |
+| **Models included** | Haiku 4.5, GPT-4.1, GPT-5 mini | Models from Anthropic, Google, OpenAI, xAI | All models including Claude Opus 4.6 |
 | **Copilot Coding Agent** | ❌ | ✅ | ✅ |
 | **Copilot Code Review** | ❌ | ✅ | ✅ |
 | **GitHub Spark** | ❌ | ❌ | ✅ |
 | **Pricing** | $0/month | $10/month | $39/month |
+
+*Additionally, a **Copilot Student** plan is available to verified students, offering features comparable to Copilot Pro at no cost, including a monthly premium request allowance.*
 
 ### 13.2 Organization & Enterprise Plans
 
@@ -723,8 +741,10 @@ GitHub Copilot is a **SaaS-only service**. There is no self-hosted option. Key d
 | **No code retention / no training** | ✅ | ✅ |
 | **IP indemnity** | ✅ | ✅ |
 | **SAML SSO enforcement** | ✅ | ✅ |
-| **Copilot Spaces (Knowledge bases)** | ❌ | ✅ |
-| **Copilot in PRs (review, summary)** | ❌ | ✅ |
+| **Copilot Spaces** | ❌ | ✅ |
+| **Premium requests per user/month** | 300 | 1,000 |
+| **GitHub Spark** | ❌ | ✅ |
+| **Third-party coding agents** | ❌ | ✅ |
 | **Pricing** | $19/user/month | $39/user/month |
 
 *Pricing as of publication date. Verify current pricing at [github.com/features/copilot](https://github.com/features/copilot). Premium request allowances and model availability may change.*
@@ -759,7 +779,7 @@ Enterprise architects may evaluate "build vs. buy" — using Copilot vs. buildin
 |---|---|---|
 | **Network** | HTTPS outbound access to GitHub endpoints | Verify firewall rules allow required domains ([Section 11.2](#112-firewall--proxy-requirements)) |
 | **Identity** | GitHub Enterprise Cloud with SAML SSO | Ensure SAML SSO is configured and enforced for the organization |
-| **Licensing** | Appropriate plan selection | Business for most organizations; Enterprise for PR review and knowledge bases |
+| **Licensing** | Appropriate plan selection | Business for most organizations; Enterprise for Copilot Spaces and higher premium request quotas |
 | **Data governance** | Verify data handling meets organizational requirements | Review GitHub's Copilot data handling documentation [¹](#ref-1); evaluate content exclusion needs |
 | **IP policy** | Configure code referencing policy | Set to `block` for maximum IP protection; `allow` with attribution where acceptable |
 | **Model policy** | Determine approved model vendors | Configure model restrictions if the organization has vendor requirements |
@@ -796,12 +816,12 @@ https://docs.github.com/en/copilot/get-started
 https://github.blog/2023-05-17-how-github-copilot-is-getting-better-at-understanding-your-code/
 
 <a id="ref-4"></a>
-**[4]** GitHub Copilot — Code Referencing & Duplication Detection  
-https://docs.github.com/en/copilot/responsible-use-of-github-copilot-features/about-copilot-code-referencing
+**[4]** GitHub Copilot — Finding Public Code That Matches Suggestions  
+https://docs.github.com/en/copilot/using-github-copilot/finding-public-code-that-matches-github-copilot-suggestions
 
 <a id="ref-5"></a>
 **[5]** GitHub Copilot — Managing Policies for Your Organization  
-https://docs.github.com/en/copilot/managing-copilot/managing-github-copilot-in-your-organization/setting-policies-for-copilot-in-your-organization/managing-policies-for-copilot-in-your-organization
+https://docs.github.com/en/copilot/how-tos/administer-copilot/manage-for-organization/manage-policies
 
 <a id="ref-6"></a>
 **[6]** Yao et al. — "ReAct: Synergizing Reasoning and Acting in Language Models" (2022)  
@@ -840,11 +860,11 @@ https://docs.github.com/en/enterprise-cloud@latest/admin/data-residency/about-gi
 https://github.blog/2022-06-21-github-copilot-is-generally-available-to-all-developers/
 
 <a id="ref-15"></a>
-**[15]** GitHub Blog — Inside GitHub: Working with the LLMs behind Copilot  
+**[15]** GitHub Blog — The Architecture of Today's LLM Applications  
 https://github.blog/2023-09-27-the-architecture-of-todays-llm-applications/
 
 ---
 
 *This document is based on publicly available information from GitHub's official documentation, blog posts, and trust center resources. Architecture details reflect the state of the product as of the publication date and are subject to change. Verify current capabilities with GitHub's official documentation.*
 
-*Document version: 1.1 | Last updated: March 17, 2026*
+*Document version: 1.2 | Last updated: March 17, 2026*
