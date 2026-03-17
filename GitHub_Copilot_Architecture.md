@@ -3,7 +3,7 @@
 **Version:** 1.2  
 **Date:** March 17, 2026  
 **Audience:** Enterprise Architects, Engineering Leadership, Security & Compliance Teams  
-**Classification:** Internal / Shareable
+**Classification:** Public — Based on publicly available information
 
 ---
 
