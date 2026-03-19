@@ -500,6 +500,7 @@ This ensures that organizations with vendor restrictions (e.g., "only OpenAI mod
 | **Telemetry (acceptance/rejection signals)** | Anonymized engagement data collected. No code content. Configurable by organization. | Standard telemetry collected. |
 | **Audit logs** | API request metadata logged (no code content). Available via GitHub Audit Log API. [⁷](#ref-7) | Not available. |
 | **Chat conversation history** | Retained client-side only (IDE memory). Not persisted server-side after session. | Retained client-side. |
+| **Data residency** | Even with GitHub Enterprise Cloud data residency enabled, Copilot data and logs are **stored outside the customer's chosen region** [¹³](#ref-13). Repository source code is stored in-region, but Copilot processing is not covered by the in-region guarantee. | Not applicable. |
 
 ### 8.2 Content Exclusion
 
@@ -709,7 +710,7 @@ GitHub Copilot is a **SaaS-only service**. There is no self-hosted option. Key d
 
 - **No on-premises deployment** — All inference occurs in GitHub/Microsoft cloud infrastructure
 - **No customer-managed models** — Models are managed, hosted, and scaled by GitHub and its model partners
-- **Data residency** — GitHub Enterprise Cloud with data residency (available in EU and other regions) extends to Copilot [¹³](#ref-13). Consult GitHub sales for current availability.
+- **Data residency** — GitHub Enterprise Cloud with data residency is available in EU, Australia, US, and Japan. However, **GitHub Copilot data (data and logs) is currently stored outside the customer's chosen region** even when data residency is enabled [¹³](#ref-13). Repository content such as source code is stored in-region, but Copilot processing data is not. Organizations with strict data sovereignty requirements should evaluate this limitation. Consult GitHub sales for the latest status.
 - **VPN/private connectivity** — Not required; all traffic is HTTPS over the public internet. Compatible with corporate proxies and firewalls.
 
 ---
